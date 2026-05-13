@@ -11,6 +11,8 @@ let player = {
 	char: '@',
 };
 
+let mobs = [];
+
 function createMap() {
 	for (let y = 0; y < height; y++) {
 		map[y] = [];
@@ -29,9 +31,13 @@ function drawMap() {
 	let output = '';
 	for (let y = 0; y < height; y++) {
 		let row = '';
+
 		for (let x = 0; x < width; x++) {
+			const mob = getMob(x, y);
 			if (player.x === x && player.y === y) {
 				row += player.char;
+			} else if (mob) {
+				row += mob.char;
 			} else {
 				row += map[y][x];
 			}
@@ -40,6 +46,54 @@ function drawMap() {
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
 	console.log(output);
+}
+
+function getMob(x, y) {
+	return mobs.find(mob => {
+		return mob.x === x && mob.y === y;
+	});
+}
+
+function randomInt(min, max) {
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getFreeCell(x, y) {
+	if (map[y][x] === '#') {
+		return false;
+	}
+
+	if (player.x === x && player.y === y) {
+		return false;
+	}
+
+	if (getMob(x, y)) {
+		return false;
+	}
+	return true;
+}
+
+function getRandomFreeCells() {
+	while (true) {
+		const x = randomInt(1, width - 2);
+		const y = randomInt(1, height - 2);
+
+		if (getFreeCell(x, y)) {
+			return { x, y };
+		}
+	}
+}
+
+function createMobs(count) {
+	for (let i = 0; i < count; i++) {
+		let pos = getRandomFreeCells();
+
+		mobs.push({
+			x: pos.x,
+			y: pos.y,
+			char: 'M',
+		});
+	}
 }
 
 function movePlayer(dx, dy) {
@@ -98,4 +152,5 @@ process.stdin.on('keypress', function (str, key) {
 });
 
 createMap();
+createMobs(5);
 drawMap();
