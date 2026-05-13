@@ -9,6 +9,9 @@ let player = {
 	x: 15,
 	y: 2,
 	char: '@',
+	hp: 15,
+	hits: 4,
+	gold: 75,
 };
 
 let mobs = [];
@@ -57,7 +60,7 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
-	output += 'Hp: 1, hits: 1, gold: 75';
+	output += `Hp: ${player.hp}, hits: ${player.hits}, gold: ${player.gold}`;
 	console.log(output);
 }
 
@@ -120,6 +123,20 @@ function movePlayer(dx, dy) {
 	const nextX = player.x + dx;
 
 	if (map[nextY][nextX] === '#') {
+		return;
+	}
+
+	const mob = getMob(nextX, nextY);
+
+	if (mob) {
+		console.log('You hit mob!!');
+		return;
+	}
+
+	const shop = getShop(nextX, nextY);
+
+	if (shop) {
+		console.log(shop.name);
 		return;
 	}
 
