@@ -13,6 +13,15 @@ let player = {
 
 let mobs = [];
 
+const shops = [
+	{
+		x: 10,
+		y: 10,
+		char: '$',
+		name: 'Shop!!!',
+	},
+];
+
 function createMap() {
 	for (let y = 0; y < height; y++) {
 		map[y] = [];
@@ -34,10 +43,13 @@ function drawMap() {
 
 		for (let x = 0; x < width; x++) {
 			const mob = getMob(x, y);
+			const shop = getShop(x, y);
 			if (player.x === x && player.y === y) {
 				row += player.char;
 			} else if (mob) {
 				row += mob.char;
+			} else if (shop) {
+				row += shop.char;
 			} else {
 				row += map[y][x];
 			}
@@ -45,6 +57,7 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
+	output += 'Hp: 1, hits: 1, gold: 75';
 	console.log(output);
 }
 
@@ -82,6 +95,12 @@ function getRandomFreeCells() {
 			return { x, y };
 		}
 	}
+}
+
+function getShop(x, y) {
+	return shops.find(shop => {
+		return shop.x === x && shop.y === y;
+	});
 }
 
 function createMobs(count) {
