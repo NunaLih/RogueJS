@@ -5,6 +5,8 @@ const map = [];
 const width = 34;
 const height = 14;
 
+let message = ``;
+
 let player = {
 	x: 15,
 	y: 2,
@@ -60,7 +62,9 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
-	output += `Hp: ${player.hp}, hits: ${player.hits}, gold: ${player.gold}`;
+	output += `Hp: ${player.hp}, hits: ${player.hits}, gold: ${player.gold}\n`;
+	output += `Message: ${message}\n`;
+
 	console.log(output);
 }
 
@@ -123,25 +127,31 @@ function movePlayer(dx, dy) {
 	const nextX = player.x + dx;
 
 	if (map[nextY][nextX] === '#') {
+		message = 'You hit wall haha';
+		drawMap();
 		return;
 	}
 
 	const mob = getMob(nextX, nextY);
 
 	if (mob) {
-		console.log('You hit mob!!');
+		message = `You hit mob. Mob HP: ${0}. Mob hit you for ${0}.`;
+		drawMap();
 		return;
 	}
 
 	const shop = getShop(nextX, nextY);
 
 	if (shop) {
-		console.log(shop.name);
+		message = 'Welcome!';
+		drawShop(shop);
 		return;
 	}
 
 	player.x = nextX;
 	player.y = nextY;
+
+	message = '';
 
 	drawMap();
 }
@@ -171,6 +181,27 @@ function handleInput(key) {
 		case 'q':
 			process.exit();
 	}
+}
+
+function drawShop(shop) {
+	console.clear();
+
+	let output = ``;
+
+	output += '====================\n';
+	output += `      ${shop.name}\n`;
+	output += '====================\n\n';
+
+	output += `Your gold: ${player.gold}\n`;
+	output += `Your HP: ${player.hp}\n\n`;
+
+	output += '1 — Buy potion (+5 HP) — 10 gold\n';
+	output += '2 — Buy sword (+1 damage) — 25 gold\n';
+	output += '3 — Leave shop\n\n';
+
+	output += `Message: ${message}\n`;
+
+	console.log(output);
 }
 
 readline.emitKeypressEvents(process.stdin);
