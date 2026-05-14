@@ -4,9 +4,12 @@ const map = [];
 
 let mode = 'game';
 let currentShop = null;
+let currentShip = null;
 
 const width = 34;
 const height = 14;
+
+let worldLevel = 1;
 
 let message = ``;
 
@@ -27,6 +30,16 @@ const shops = [
 		y: 10,
 		char: '$',
 		name: 'Shop!!!',
+	},
+];
+
+const ships = [
+	{
+		x: 25,
+		y: 10,
+		char: 'S',
+		name: 'Ship...',
+		price: 30,
 	},
 ];
 
@@ -52,12 +65,15 @@ function drawMap() {
 		for (let x = 0; x < width; x++) {
 			const mob = getMob(x, y);
 			const shop = getShop(x, y);
+			const ship = getShip(x, y);
 			if (player.x === x && player.y === y) {
 				row += player.char;
 			} else if (mob) {
 				row += mob.char;
 			} else if (shop) {
 				row += shop.char;
+			} else if (ship) {
+				row += ship.char;
 			} else {
 				row += map[y][x];
 			}
@@ -87,6 +103,14 @@ function getFreeCell(x, y) {
 	}
 
 	if (player.x === x && player.y === y) {
+		return false;
+	}
+
+	if (getShip(x, y)) {
+		return false;
+	}
+
+	if (getShop(x, y)) {
 		return false;
 	}
 
@@ -121,9 +145,9 @@ function createMobs(count) {
 			x: pos.x,
 			y: pos.y,
 			char: 'M',
-			hp: 10,
-			gold: 10,
-			hits: 2,
+			hp: 10 + worldLevel * 2,
+			gold: 10 + worldLevel * 2,
+			hits: 2 + worldLevel,
 		});
 	}
 }
@@ -157,6 +181,16 @@ function movePlayer(dx, dy) {
 		return;
 	}
 
+	const ship = getShip(nextX, nextY);
+
+	if (ship) {
+		mode = 'ship';
+		currentShip = ship;
+		message = 'Welcome ship!';
+		drawShip(ship);
+		return;
+	}
+
 	player.x = nextX;
 	player.y = nextY;
 
@@ -170,6 +204,8 @@ function handleInput(key) {
 		handleGameInput(key);
 	} else if (mode === 'shop') {
 		handleShopInput(key);
+	} else if (mode === 'ship') {
+		handleShipInput(key);
 	}
 }
 
@@ -215,6 +251,20 @@ function handleShopInput(key) {
 			mode = 'game';
 			currentShop = null;
 			message = 'You left the shop.';
+			drawMap();
+			break;
+	}
+}
+
+function handleShipInput(key) {
+	switch (key.name) {
+		case '1':
+			travelToNewWorld();
+			break;
+		case '2':
+			mode = 'game';
+			currentShip = null;
+			message = 'You left the ship.';
 			drawMap();
 			break;
 	}
@@ -285,6 +335,61 @@ function fightMod(mob) {
 		console.log('You died.');
 		process.exit();
 	}
+}
+
+function getShip(x, y) {
+	return ships.find(ship => {
+		return ship.x === x && ship.y === y;
+	});
+}
+
+function drawShip(ship) {
+	console.clear();
+
+	let output = '';
+
+	output += '====================\n';
+	output += `      ${ship.name}\n`;
+	output += '====================\n\n';
+
+	output += `Current world: ${worldLevel}\n`;
+	output += `Your gold: ${player.gold}\n\n`;
+
+	output += `1 — Travel to next world — ${ship.price} gold\n`;
+	output += '2 — Leave ship\n\n';
+
+	output += `Message: ${message}\n`;
+
+	console.log(output);
+}
+
+function travelToNewWorld() {
+	if (player.gold < 30) {
+		message = `Not enough gold`;
+		drawShip(currentShip);
+		return;
+	}
+
+	player.gold -= currentShip.price;
+
+	createNewWorld();
+	worldLevel += 1;
+	message = `You travel new world.`;
+
+	drawMap();
+}
+
+function createNewWorld() {
+	mobs = [];
+
+	player.x = 15;
+	player.y = 2;
+
+	createMap();
+	createMobs(8);
+
+	mode = 'game';
+	currentShip = null;
 }
 
 readline.emitKeypressEvents(process.stdin);
