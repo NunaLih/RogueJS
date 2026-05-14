@@ -150,7 +150,7 @@ function createMobs(count) {
 			char: 'M',
 			hp: 10 + worldLevel * 2,
 			gold: 10 + worldLevel * 2,
-			hits: 2 + worldLevel,
+			hits: worldLevel,
 		});
 	}
 }
@@ -170,6 +170,7 @@ function movePlayer(dx, dy) {
 	if (mob) {
 		fightMod(mob);
 		message = `You hit mob. Mob HP: ${mob.hp}. Mob hit you for ${mob.hits}.`;
+		// moveMobs();
 		drawMap();
 		return;
 	}
@@ -198,7 +199,7 @@ function movePlayer(dx, dy) {
 	player.y = nextY;
 
 	message = '';
-
+	moveMobs();
 	generationNewMobs();
 
 	drawMap();
@@ -377,8 +378,9 @@ function travelToNewWorld() {
 
 	player.gold -= currentShip.price;
 
-	createNewWorld();
 	worldLevel += 1;
+	createNewWorld();
+
 	message = `You travel new world.`;
 
 	drawMap();
@@ -406,6 +408,44 @@ function generationNewMobs() {
 	createMobs(mobsQuan);
 
 	message = 'Spawn more mobs...';
+}
+
+function moveMobs() {
+	let mobsDirection = [
+		{ dx: 1, dy: 0 },
+		{ dx: -1, dy: 0 },
+		{ dx: 0, dy: 1 },
+		{ dx: 0, dy: -1 },
+		{ dx: 0, dy: 0 },
+	];
+
+	for (const mob of mobs) {
+		const dxToPlayer = player.x - mob.x;
+		const dyToPlayer = player.y - mob.y;
+
+		const distanceToPlayer = Math.abs(dxToPlayer) + Math.abs(dyToPlayer);
+		const direction = mobsDirection[randomInt(0, mobsDirection.length - 1)];
+
+		const nextY = mob.y + direction.dy;
+		const nextX = mob.x + direction.dx;
+
+		if (distanceToPlayer === 1) {
+			player.hp -= mob.hits;
+			message = `Mob hit you -${mob.hits}.`;
+
+			if (player.hp <= 0) {
+				console.clear();
+				message = 'You died.';
+				process.exit();
+			}
+			continue;
+		}
+
+		if (getFreeCell(nextX, nextY)) {
+			mob.x = nextX;
+			mob.y = nextY;
+		}
+	}
 }
 
 readline.emitKeypressEvents(process.stdin);
