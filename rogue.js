@@ -13,6 +13,9 @@ let worldLevel = 1;
 
 let message = ``;
 
+const maxMobs = 8;
+const minMobs = 2;
+
 let player = {
 	x: 15,
 	y: 2,
@@ -166,7 +169,7 @@ function movePlayer(dx, dy) {
 
 	if (mob) {
 		fightMod(mob);
-		message = `You hit mob. Mob HP: ${player.hp}. Mob hit you for ${mob.hits}.`;
+		message = `You hit mob. Mob HP: ${mob.hp}. Mob hit you for ${mob.hits}.`;
 		drawMap();
 		return;
 	}
@@ -195,6 +198,8 @@ function movePlayer(dx, dy) {
 	player.y = nextY;
 
 	message = '';
+
+	generationNewMobs();
 
 	drawMap();
 }
@@ -390,6 +395,17 @@ function createNewWorld() {
 
 	mode = 'game';
 	currentShip = null;
+}
+
+function generationNewMobs() {
+	if (mobs.length >= minMobs) {
+		return;
+	}
+
+	const mobsQuan = maxMobs - mobs.length;
+	createMobs(mobsQuan);
+
+	message = 'Spawn more mobs...';
 }
 
 readline.emitKeypressEvents(process.stdin);
