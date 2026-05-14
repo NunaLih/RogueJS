@@ -2,6 +2,9 @@ const readline = require('readline');
 
 const map = [];
 
+let mode = 'game';
+let currentShop = null;
+
 const width = 34;
 const height = 14;
 
@@ -118,6 +121,9 @@ function createMobs(count) {
 			x: pos.x,
 			y: pos.y,
 			char: 'M',
+			hp: 10,
+			gold: 10,
+			hits: 2,
 		});
 	}
 }
@@ -135,7 +141,8 @@ function movePlayer(dx, dy) {
 	const mob = getMob(nextX, nextY);
 
 	if (mob) {
-		message = `You hit mob. Mob HP: ${0}. Mob hit you for ${0}.`;
+		fightMod(mob);
+		message = `You hit mob. Mob HP: ${player.hp}. Mob hit you for ${mob.hits}.`;
 		drawMap();
 		return;
 	}
@@ -143,6 +150,8 @@ function movePlayer(dx, dy) {
 	const shop = getShop(nextX, nextY);
 
 	if (shop) {
+		mode = 'shop';
+		currentShop = shop;
 		message = 'Welcome!';
 		drawShop(shop);
 		return;
@@ -157,6 +166,14 @@ function movePlayer(dx, dy) {
 }
 
 function handleInput(key) {
+	if (mode === 'game') {
+		handleGameInput(key);
+	} else if (mode === 'shop') {
+		handleShopInput(key);
+	}
+}
+
+function handleGameInput(key) {
 	switch (key.name) {
 		case 'w':
 		case 'up':
@@ -183,13 +200,33 @@ function handleInput(key) {
 	}
 }
 
+function handleShopInput(key) {
+	switch (key.name) {
+		case '1':
+			getPotion();
+			drawShop(currentShop);
+			break;
+		case '2':
+			getSword();
+			drawShop(currentShop);
+			break;
+		case '3':
+		case 'escape':
+			mode = 'game';
+			currentShop = null;
+			message = 'You left the shop.';
+			drawMap();
+			break;
+	}
+}
+
 function drawShop(shop) {
 	console.clear();
 
 	let output = ``;
 
 	output += '====================\n';
-	output += `      ${shop.name}\n`;
+	output += `      ${currentShop.name}\n`;
 	output += '====================\n\n';
 
 	output += `Your gold: ${player.gold}\n`;
@@ -202,6 +239,52 @@ function drawShop(shop) {
 	output += `Message: ${message}\n`;
 
 	console.log(output);
+}
+
+function getSword() {
+	if (player.gold < 25) {
+		message = `Not enough gold`;
+		return;
+	}
+
+	player.hits += 1;
+	player.gold -= 25;
+
+	message = `You buy sword. +1 hit`;
+}
+
+function getPotion() {
+	if (player.gold < 10) {
+		message = `Not enough gold`;
+		return;
+	}
+
+	player.hp += 5;
+	player.gold -= 10;
+
+	message = `You buy potion. +5 hp`;
+}
+
+function fightMod(mob) {
+	mob.hp -= player.hits;
+
+	if (mob.hp <= 0) {
+		player.gold += mob.gold;
+
+		let index = mobs.indexOf(mob);
+		mobs.splice(index, 1);
+
+		message = `You killed mob! Gold: +${mob.gold}`;
+
+		return;
+	}
+	player.hp -= mob.hits;
+
+	if (player.hp <= 0) {
+		console.clear();
+		console.log('You died.');
+		process.exit();
+	}
 }
 
 readline.emitKeypressEvents(process.stdin);
