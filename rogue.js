@@ -19,6 +19,8 @@ let message = ``;
 const maxMobs = 8;
 const minMobs = 2;
 
+let location;
+
 let player = {
 	x: 15,
 	y: 2,
@@ -75,6 +77,8 @@ function createMap() {
 	currentHeight = height;
 	currentWidth = width;
 
+	location = 'world';
+
 	player.x = 15;
 	player.y = 2;
 
@@ -85,6 +89,8 @@ function createMap() {
 function createDungeon() {
 	currentHeight = 10;
 	currentWidth = 10;
+
+	location = 'dungeon';
 
 	player.x = 2;
 	player.y = 2;
@@ -97,8 +103,46 @@ function createDungeon() {
 	map[3][4] = '~';
 	map[4][3] = '~';
 
+	createMobsDungeon(4);
+
 	message = 'You entered the dungeon.';
 	drawMap();
+}
+
+function createDungeonMob() {
+	const pos = getRandomFreeCells();
+
+	mobs.push({
+		x: pos.x,
+		y: pos.y,
+		char: 'R',
+		hp: 8 + worldLevel * 2,
+		gold: 5 + worldLevel * 2,
+		hits: 1 + worldLevel,
+		type: 'dungeonMob',
+	});
+}
+
+function createDungeonBoss() {
+	const pos = getRandomFreeCells();
+
+	mobs.push({
+		x: pos.x,
+		y: pos.y,
+		char: 'B',
+		hp: 25 + worldLevel * 2,
+		gold: 60 + worldLevel * 2,
+		hits: 2 + worldLevel,
+		type: 'dungeonBoss',
+	});
+}
+
+function createMobsDungeon(count) {
+	mobs = [];
+	for (let i = 0; i < count; i++) {
+		createDungeonMob();
+	}
+	createDungeonBoss();
 }
 
 function drawMap() {
@@ -259,7 +303,9 @@ function movePlayer(dx, dy) {
 
 	message = '';
 	moveMobs();
-	generationNewMobs();
+	if (location === 'world') {
+		generationNewMobs();
+	}
 
 	drawMap();
 }
