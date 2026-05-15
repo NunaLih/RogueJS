@@ -9,9 +9,6 @@ let currentShip = null;
 const width = 34;
 const height = 14;
 
-let currentWidth = width;
-let currentHeight = height;
-
 let worldLevel = 1;
 
 let message = ``;
@@ -49,20 +46,11 @@ const ships = [
 	},
 ];
 
-const dungeon = [
-	{
-		x: 30,
-		y: 6,
-		char: '>',
-		name: 'dungeon',
-	},
-];
-
-function createBaseMap(w, h) {
-	for (let y = 0; y < h; y++) {
+function createMap() {
+	for (let y = 0; y < height; y++) {
 		map[y] = [];
-		for (let x = 0; x < w; x++) {
-			if (y === 0 || x === 0 || y === h - 1 || x === w - 1) {
+		for (let x = 0; x < width; x++) {
+			if (y === 0 || x === 0 || y === height - 1 || x === width - 1) {
 				map[y][x] = '#';
 			} else {
 				map[y][x] = '.';
@@ -71,49 +59,16 @@ function createBaseMap(w, h) {
 	}
 }
 
-function createMap() {
-	currentHeight = height;
-	currentWidth = width;
-
-	player.x = 15;
-	player.y = 2;
-
-	createBaseMap(currentWidth, currentHeight);
-	drawMap();
-}
-
-function createDungeon() {
-	currentHeight = 10;
-	currentWidth = 10;
-
-	player.x = 2;
-	player.y = 2;
-
-	mobs = [];
-
-	createBaseMap(currentWidth, currentHeight);
-
-	map[3][3] = '~';
-	map[3][4] = '~';
-	map[4][3] = '~';
-
-	message = 'You entered the dungeon.';
-	drawMap();
-}
-
 function drawMap() {
 	console.clear();
 	let output = '';
-
-	for (let y = 0; y < currentHeight; y++) {
+	for (let y = 0; y < height; y++) {
 		let row = '';
 
-		for (let x = 0; x < currentWidth; x++) {
+		for (let x = 0; x < width; x++) {
 			const mob = getMob(x, y);
 			const shop = getShop(x, y);
 			const ship = getShip(x, y);
-			const dungeon = getDungeon(x, y);
-
 			if (player.x === x && player.y === y) {
 				row += player.char;
 			} else if (mob) {
@@ -122,8 +77,6 @@ function drawMap() {
 				row += shop.char;
 			} else if (ship) {
 				row += ship.char;
-			} else if (dungeon) {
-				row += dungeon.char;
 			} else {
 				row += map[y][x];
 			}
@@ -167,18 +120,13 @@ function getFreeCell(x, y) {
 	if (getMob(x, y)) {
 		return false;
 	}
-
-	if (getDungeon(x, y)) {
-		return false;
-	}
-
 	return true;
 }
 
 function getRandomFreeCells() {
 	while (true) {
-		const x = randomInt(1, currentWidth - 2);
-		const y = randomInt(1, currentHeight - 2);
+		const x = randomInt(1, width - 2);
+		const y = randomInt(1, height - 2);
 
 		if (getFreeCell(x, y)) {
 			return { x, y };
@@ -247,13 +195,6 @@ function movePlayer(dx, dy) {
 		return;
 	}
 
-	const dungeon = getDungeon(nextX, nextY);
-
-	if (dungeon) {
-		mode = 'game';
-		return;
-	}
-
 	player.x = nextX;
 	player.y = nextY;
 
@@ -294,10 +235,6 @@ function handleGameInput(key) {
 		case 'd':
 		case 'right':
 			movePlayer(1, 0);
-			break;
-
-		case 'u':
-			createDungeon();
 			break;
 
 		case 'q':
@@ -433,7 +370,7 @@ function drawShip(ship) {
 }
 
 function travelToNewWorld() {
-	if (player.gold < currentShip.price) {
+	if (player.gold < 30) {
 		message = `Not enough gold`;
 		drawShip(currentShip);
 		return;
@@ -489,32 +426,17 @@ function moveMobs() {
 		const distanceToPlayer = Math.abs(dxToPlayer) + Math.abs(dyToPlayer);
 		const direction = mobsDirection[randomInt(0, mobsDirection.length - 1)];
 
-		const nextY = mob.y + direction.dy;
 		const nextX = mob.x + direction.dx;
+		const nextY = mob.y + direction.dy;
 
-		if (distanceToPlayer === 1) {
-			player.hp -= mob.hits;
-			message = `Mob hit you -${mob.hits}.`;
-
-			if (player.hp <= 0) {
-				console.clear();
-				message = 'You died.';
-				process.exit();
-			}
-			continue;
-		}
+		console.log(nextX, nextY);
 
 		if (getFreeCell(nextX, nextY)) {
 			mob.x = nextX;
 			mob.y = nextY;
 		}
 	}
-}
-
-function getDungeon(x, y) {
-	return dungeon.find(dung => {
-		return dung.x === x && dung.y === y;
-	});
+	console.log(nextX, nextY);
 }
 
 readline.emitKeypressEvents(process.stdin);
