@@ -60,6 +60,15 @@ const dungeon = [
 	},
 ];
 
+const door = [
+	{
+		x: 5,
+		y: 5,
+		char: '<',
+		target: 'outside',
+	},
+];
+
 function createBaseMap(w, h) {
 	for (let y = 0; y < h; y++) {
 		map[y] = [];
@@ -157,6 +166,7 @@ function drawMap() {
 			const shop = getShop(x, y);
 			const ship = getShip(x, y);
 			const dungeon = getDungeon(x, y);
+			const door = location === 'dungeon' ? getDoor(x, y) : null;
 
 			if (player.x === x && player.y === y) {
 				row += player.char;
@@ -168,6 +178,8 @@ function drawMap() {
 				row += ship.char;
 			} else if (dungeon) {
 				row += dungeon.char;
+			} else if (door) {
+				row += door.char;
 			} else {
 				row += map[y][x];
 			}
@@ -266,7 +278,6 @@ function movePlayer(dx, dy) {
 	if (mob) {
 		fightMod(mob);
 		message = `You hit mob. Mob HP: ${mob.hp}. Mob hit you for ${mob.hits}.`;
-		// moveMobs();
 		drawMap();
 		return;
 	}
@@ -295,6 +306,13 @@ function movePlayer(dx, dy) {
 
 	if (dungeon) {
 		mode = 'game';
+		return;
+	}
+
+	const doorExit = getDoor(nextX, nextY);
+
+	if (doorExit && doorExit.target === 'outside') {
+		getOutside();
 		return;
 	}
 
@@ -561,6 +579,19 @@ function getDungeon(x, y) {
 	return dungeon.find(dung => {
 		return dung.x === x && dung.y === y;
 	});
+}
+
+function getDoor(x, y) {
+	return door.find(dung => {
+		return dung.x === x && dung.y === y;
+	});
+}
+
+function getOutside() {
+	mobs = [];
+	createMap();
+	createMobs(8);
+	drawMap();
 }
 
 readline.emitKeypressEvents(process.stdin);
