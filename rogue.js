@@ -1,5 +1,11 @@
 const readline = require('readline');
 
+const reset = '\x1b[0m';
+const red = '\x1b[31m';
+const green = '\x1b[32m';
+const yellow = '\x1b[33m';
+const blue = '\x1b[34m';
+
 const map = [];
 
 let mode = 'game';
@@ -138,7 +144,7 @@ function createDungeonBoss() {
 	mobs.push({
 		x: pos.x,
 		y: pos.y,
-		char: 'B',
+		char: `${blue + 'B' + reset}`,
 		hp: 25 + worldLevel * 2,
 		gold: 60 + worldLevel * 2,
 		hits: 2 + worldLevel,
@@ -187,7 +193,7 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
-	output += `Hp: ${player.hp}, hits: ${player.hits}, gold: ${player.gold}\n`;
+	output += `Hp: ${red + player.hp + reset}, hits: ${player.hits}, gold: ${yellow + player.gold + reset}\n`;
 	output += `Message: ${message}\n`;
 
 	console.log(output);
@@ -277,7 +283,7 @@ function movePlayer(dx, dy) {
 
 	if (mob) {
 		fightMod(mob);
-		message = `You hit mob. Mob HP: ${mob.hp}. Mob hit you for ${mob.hits}.`;
+		message = `You hit mob. Mob HP: ${red + mob.hp + reset}. Mob hit you for ${mob.hits}.`;
 		drawMap();
 		return;
 	}
@@ -360,7 +366,7 @@ function handleGameInput(key) {
 			movePlayer(1, 0);
 			break;
 
-		case 'u':
+		case 'e':
 			createDungeon();
 			break;
 
@@ -412,8 +418,8 @@ function drawShop(shop) {
 	output += `      ${currentShop.name}\n`;
 	output += '====================\n\n';
 
-	output += `Your gold: ${player.gold}\n`;
-	output += `Your HP: ${player.hp}\n\n`;
+	output += `Your gold: ${yellow + player.gold + reset}\n`;
+	output += `Your HP: ${red + player.hp + reset}\n\n`;
 
 	output += '1 — Buy potion (+5 HP) — 10 gold\n';
 	output += '2 — Buy sword (+1 damage) — 25 gold\n';
@@ -445,7 +451,7 @@ function getPotion() {
 	player.hp += 5;
 	player.gold -= 10;
 
-	message = `You buy potion. +5 hp`;
+	message = `You buy potion. ${red + '+5 hp' + reset}`;
 }
 
 function fightMod(mob) {
@@ -457,7 +463,7 @@ function fightMod(mob) {
 		let index = mobs.indexOf(mob);
 		mobs.splice(index, 1);
 
-		message = `You killed mob! Gold: +${mob.gold}`;
+		message = `You killed mob! Gold: +${yellow + mob.gold + reset}`;
 
 		return;
 	}
