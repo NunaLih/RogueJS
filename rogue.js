@@ -1,3 +1,4 @@
+const { type } = require('os');
 const readline = require('readline');
 
 const reset = '\x1b[0m';
@@ -34,6 +35,8 @@ let player = {
 	hp: 15,
 	hits: 4,
 	gold: 75,
+
+	inventory: [],
 };
 
 let mobs = [];
@@ -341,6 +344,8 @@ function handleInput(key) {
 		handleShopInput(key);
 	} else if (mode === 'ship') {
 		handleShipInput(key);
+	} else if (mode === 'inventory') {
+		handleInventory(key);
 	}
 }
 
@@ -370,8 +375,65 @@ function handleGameInput(key) {
 			createDungeon();
 			break;
 
+		case 'i':
+			mode = 'inventory';
+			openInventory();
+			break;
+
 		case 'q':
 			process.exit();
+	}
+}
+
+function openInventory() {
+	console.clear();
+
+	let output = '==== Inventory ====\n\n';
+
+	if (player.inventory.length === 0) {
+		output += 'Inventory empty..\n\n';
+	} else {
+		player.inventory.forEach((item, index) => {
+			output += `${index + 1}. - ${item.name}\n`;
+		});
+	}
+
+	output += '\n\nEsc - close inventory';
+	console.log(output);
+}
+
+function handleInventory(key) {
+	if (key.name === 'escape') {
+		mode = 'game';
+		drawMap();
+		return;
+	}
+
+	const index = Number(key.name) - 1;
+
+	const item = player.inventory[index];
+
+	if (item.type === 'heal') {
+		player.hp += item.value;
+
+		player.inventory.splice(index, 1);
+
+		message = `Used ${item.name} + ${item.value}hp`;
+
+		mode = 'game';
+		drawMap();
+		return;
+	}
+
+	if (item.type === 'weapon') {
+		player.hits += item.damage;
+
+		player.inventory.splice(index, 1);
+
+		message = `Equipped ${item.name} +${item.damage} hit`;
+		mode = 'game';
+		drawMap();
+		return;
 	}
 }
 
@@ -436,10 +498,12 @@ function getSword() {
 		return;
 	}
 
-	player.hits += 1;
+	// player.hits += 1;
 	player.gold -= 25;
 
-	message = `You buy sword. +1 hit`;
+	player.inventory.push({ name: 'Base Weapon', type: 'weapon', damage: 1 });
+
+	message = `You buy sword. Added inventory sword +1 hit`;
 }
 
 function getPotion() {
@@ -448,10 +512,12 @@ function getPotion() {
 		return;
 	}
 
-	player.hp += 5;
+	// player.hp += 5;
 	player.gold -= 10;
 
-	message = `You buy potion. ${red + '+5 hp' + reset}`;
+	player.inventory.push({ name: 'Heal potion', type: 'heal', value: 5 });
+
+	message = `You buy potion. Added inventory ${red + '+5 hp potion' + reset}`;
 }
 
 function fightMod(mob) {
