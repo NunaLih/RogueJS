@@ -1,4 +1,4 @@
-const { type } = require('os');
+const { type, platform } = require('os');
 const readline = require('readline');
 
 const reset = '\x1b[0m';
@@ -37,6 +37,11 @@ let player = {
 	gold: 75,
 
 	inventory: [],
+
+	equipment: {
+		weapon: null,
+		armor: null,
+	},
 };
 
 let mobs = [];
@@ -196,7 +201,9 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD / arrows — move, Q — quit\n';
-	output += `Hp: ${red + player.hp + reset}, hits: ${player.hits}, gold: ${yellow + player.gold + reset}\n`;
+	output += `Hp: ${red + player.hp + reset}, hits: ${getPlayerDamage()}, gold: ${yellow + player.gold + reset}\n`;
+	output += `Weapon: ${player.equipment.weapon ? green + player.equipment.weapon.name + reset : 'none'}  `;
+	output += `Armor: ${player.equipment.armor ? green + player.equipment.armor.name + reset : 'none'}\n`;
 	output += `Message: ${message}\n`;
 
 	console.log(output);
@@ -397,6 +404,9 @@ function openInventory() {
 			output += `${index + 1}. - ${item.name}\n`;
 		});
 	}
+	output += `\n${yellow + '+==+===' + green + 'Equipment' + yellow + '+==+===' + reset}\n`;
+	output += `${green + 'Weapon' + reset}: ${player.equipment.weapon ? player.equipment.weapon.name : 'none'}\n`;
+	output += `\n${green + 'Armor' + reset}: ${player.equipment.armor ? player.equipment.armor.name : 'none'}\n`;
 
 	output += '\n\nEsc - close inventory';
 	console.log(output);
@@ -426,7 +436,12 @@ function handleInventory(key) {
 	}
 
 	if (item.type === 'weapon') {
-		player.hits += item.damage;
+		if (player.equipment.weapon) {
+			player.inventory.push(player.equipment.weapon);
+		}
+
+		player.equipment.weapon = item;
+		// player.hits += item.damage;
 
 		player.inventory.splice(index, 1);
 
@@ -436,6 +451,18 @@ function handleInventory(key) {
 		return;
 	}
 }
+
+function getPlayerDamage() {
+	let damage = player.hits;
+
+	if (player.equipment.weapon) {
+		damage += player.equipment.weapon.damage;
+	}
+
+	return damage;
+}
+
+function getArmorPlayer() {}
 
 function handleShopInput(key) {
 	switch (key.name) {
@@ -521,7 +548,7 @@ function getPotion() {
 }
 
 function fightMod(mob) {
-	mob.hp -= player.hits;
+	mob.hp -= getPlayerDamage();
 
 	if (mob.hp <= 0) {
 		player.gold += mob.gold;
