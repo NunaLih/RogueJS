@@ -1,4 +1,3 @@
-const { type, platform } = require('os');
 const readline = require('readline');
 
 const reset = '\x1b[0m';
