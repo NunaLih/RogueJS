@@ -1,3 +1,4 @@
+const { type } = require('os');
 const readline = require('readline');
 
 const reset = '\x1b[0m';
@@ -51,6 +52,7 @@ const shops = [
 		y: 10,
 		char: '$',
 		name: 'Shop!!!',
+		items: [],
 	},
 ];
 
@@ -80,6 +82,15 @@ const door = [
 		char: '<',
 		target: 'outside',
 	},
+];
+
+const shopItems = [
+	{ name: 'Base heal', type: 'potion', value: 5, price: 10 },
+	{ name: 'Medium heal', type: 'potion', value: 15, price: 35 },
+	{ name: 'Super heal', type: 'potion', value: 40, price: 90 },
+	{ name: 'Base weapon', type: 'weapon', damage: 1, price: 20 },
+	{ name: 'Dragonsword', type: 'weapon', damage: 10, price: 150 },
+	{ name: 'Claw', type: 'weapon', damage: 4, price: 70 },
 ];
 
 function createBaseMap(w, h) {
@@ -422,7 +433,7 @@ function handleInventory(key) {
 
 	const item = player.inventory[index];
 
-	if (item.type === 'heal') {
+	if (item.type === 'potion') {
 		player.hp += item.value;
 
 		player.inventory.splice(index, 1);
@@ -440,7 +451,6 @@ function handleInventory(key) {
 		}
 
 		player.equipment.weapon = item;
-		// player.hits += item.damage;
 
 		player.inventory.splice(index, 1);
 
@@ -463,24 +473,53 @@ function getPlayerDamage() {
 
 function getArmorPlayer() {}
 
-function handleShopInput(key) {
-	switch (key.name) {
-		case '1':
-			getPotion();
-			drawShop(currentShop);
-			break;
-		case '2':
-			getSword();
-			drawShop(currentShop);
-			break;
-		case '3':
-		case 'escape':
-			mode = 'game';
-			currentShop = null;
-			message = 'You left the shop.';
-			drawMap();
-			break;
+function generateShopItems(item) {
+	const shuffl = shopItems.sort(() => {
+		return 0.5 - Math.random();
+	});
+	const randomElem = shuffl.slice(0, item);
+	return randomElem;
+}
+
+function buyItem(item) {
+	if (player.gold < item.price) {
+		message = `Not enough gold`;
+		return;
 	}
+
+	player.gold -= item.price;
+
+	if (item.type === 'weapon') {
+		player.inventory.push({
+			name: item.name,
+			type: item.type,
+			damage: item.damage,
+		});
+		console.log((message = `Added inventory ${item.name} +${item.damage} hit`));
+	}
+	if (item.type === 'potion') {
+		player.inventory.push({
+			name: item.name,
+			type: item.type,
+			value: item.value,
+		});
+		console.log((message = `Added inventory ${item.name} +${item.value}hp`));
+	}
+}
+
+function handleShopInput(key) {
+	if (key.name === 'escape') {
+		mode = 'game';
+		drawMap();
+		return;
+	}
+
+	const index = Number(key.name) - 1;
+
+	const item = currentShop.items[index];
+	buyItem(item);
+
+	drawShop(currentShop);
 }
 
 function handleShipInput(key) {
@@ -499,51 +538,28 @@ function handleShipInput(key) {
 
 function drawShop(shop) {
 	console.clear();
-
 	let output = ``;
 
-	output += '====================\n';
-	output += `      ${currentShop.name}\n`;
-	output += '====================\n\n';
+	item = shop.items = generateShopItems(5);
 
+	output += '====================\n';
+	output += `${shop.name}\n`;
+	output += '====================\n\n';
 	output += `Your gold: ${yellow + player.gold + reset}\n`;
 	output += `Your HP: ${red + player.hp + reset}\n\n`;
 
-	output += '1 — Buy potion (+5 HP) — 10 gold\n';
-	output += '2 — Buy sword (+1 damage) — 25 gold\n';
-	output += '3 — Leave shop\n\n';
+	item.forEach((elem, index) => {
+		if (elem.type === 'weapon') {
+			return (output += `${index + 1}. ${elem.name} (${elem.damage})hit — ${elem.price} gold\n`);
+		}
+		if (elem.type === 'potion') {
+			return (output += `${index + 1}. ${elem.name} +(${elem.value})hp — ${elem.price} gold\n`);
+		}
+	});
 
-	output += `Message: ${message}\n`;
+	output += '\n\nExit shop - Esc';
 
 	console.log(output);
-}
-
-function getSword() {
-	if (player.gold < 25) {
-		message = `Not enough gold`;
-		return;
-	}
-
-	// player.hits += 1;
-	player.gold -= 25;
-
-	player.inventory.push({ name: 'Base Weapon', type: 'weapon', damage: 1 });
-
-	message = `You buy sword. Added inventory sword +1 hit`;
-}
-
-function getPotion() {
-	if (player.gold < 10) {
-		message = `Not enough gold`;
-		return;
-	}
-
-	// player.hp += 5;
-	player.gold -= 10;
-
-	player.inventory.push({ name: 'Heal potion', type: 'heal', value: 5 });
-
-	message = `You buy potion. Added inventory ${red + '+5 hp potion' + reset}`;
 }
 
 function fightMod(mob) {
