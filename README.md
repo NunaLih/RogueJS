@@ -1,9 +1,12 @@
-<img width="537" height="388" alt="image" src="https://github.com/user-attachments/assets/96ba3440-c761-4540-bd44-ca095e5ab783" />
+<img width="499" height="471" alt="image" src="https://github.com/user-attachments/assets/1aea3a22-f30e-45f6-9167-1310ae633cdb" />
 
 Shop:
 
-<img width="525" height="310" alt="image" src="https://github.com/user-attachments/assets/a5c939e6-cd6e-437e-9743-aba024da5606" />
+<img width="509" height="401" alt="image" src="https://github.com/user-attachments/assets/da5fdd46-e710-4747-a8fd-71a8c5cdca91" />
 
 Ship:
 
-<img width="521" height="271" alt="image" src="https://github.com/user-attachments/assets/c727367b-5485-472c-add5-a1396b8dd0d3" />
+<img width="438" height="320" alt="image" src="https://github.com/user-attachments/assets/30c97e8f-0a0f-496c-9d93-fd933973110c" />
+
+Dungeon:
+<img width="536" height="393" alt="image" src="https://github.com/user-attachments/assets/5ac70234-5e50-4618-a4cd-99e05903e245" />
