@@ -314,6 +314,11 @@ function movePlayer(dx, dy) {
 		mode = 'shop';
 		currentShop = shop;
 		message = 'Welcome!';
+
+		if (shop.items.length <= 0) {
+			shop.items = generateShopItems(5);
+		}
+
 		drawShop(shop);
 		return;
 	}
@@ -517,8 +522,8 @@ function handleShopInput(key) {
 	const index = Number(key.name) - 1;
 
 	const item = currentShop.items[index];
-	buyItem(item);
 
+	buyItem(item);
 	drawShop(currentShop);
 }
 
@@ -540,7 +545,7 @@ function drawShop(shop) {
 	console.clear();
 	let output = ``;
 
-	item = shop.items = generateShopItems(5);
+	item = shop.items;
 
 	output += '====================\n';
 	output += `${shop.name}\n`;
@@ -556,7 +561,7 @@ function drawShop(shop) {
 			return (output += `${index + 1}. ${elem.name} +(${elem.value})hp — ${elem.price} gold\n`);
 		}
 	});
-
+	output += `\nMessage: ${message}\n`;
 	output += '\n\nExit shop - Esc';
 
 	console.log(output);
