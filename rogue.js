@@ -7,17 +7,7 @@ const green = '\x1b[32m';
 const yellow = '\x1b[33m';
 const blue = '\x1b[34m';
 
-const map = [];
-
 let mode = 'game';
-let currentShop = null;
-let currentShip = null;
-
-const width = 34;
-const height = 14;
-
-let currentWidth = width;
-let currentHeight = height;
 
 let worldLevel = 1;
 
@@ -26,7 +16,8 @@ let message = ``;
 const maxMobs = 8;
 const minMobs = 2;
 
-let location;
+let currentShip = null;
+let currentShop = null;
 
 let player = {
 	x: 15,
@@ -45,45 +36,12 @@ let player = {
 	},
 };
 
-let mobs = [];
+const worlds = {
+	overworld: createWorld(34, 14, 'world'),
+	dungeon: createWorld(10, 10, 'dungeon'),
+};
 
-const shops = [
-	{
-		x: randomInt(2, currentWidth - 3),
-		y: randomInt(2, currentHeight - 3),
-		char: '$',
-		name: 'Shop!!!',
-		items: [],
-	},
-];
-
-const ships = [
-	{
-		x: 25,
-		y: 10,
-		char: 'S',
-		name: 'Ship...',
-		price: 30,
-	},
-];
-
-const dungeon = [
-	{
-		x: 30,
-		y: 6,
-		char: '>',
-		name: 'dungeon',
-	},
-];
-
-const door = [
-	{
-		x: 5,
-		y: 5,
-		char: '<',
-		target: 'outside',
-	},
-];
+let activeWorld = worlds.overworld;
 
 const shopItems = [
 	{ name: 'Base heal', type: 'potion', value: 5, price: 10 },
@@ -95,48 +53,97 @@ const shopItems = [
 ];
 
 function createBaseMap(w, h) {
+	activeWorld.map = [];
 	for (let y = 0; y < h; y++) {
-		map[y] = [];
+		activeWorld.map[y] = [];
 		for (let x = 0; x < w; x++) {
 			if (y === 0 || x === 0 || y === h - 1 || x === w - 1) {
-				map[y][x] = '#';
+				activeWorld.map[y][x] = '#';
 			} else {
-				map[y][x] = '.';
+				activeWorld.map[y][x] = '.';
 			}
 		}
 	}
 }
 
-function createMap() {
-	currentHeight = height;
-	currentWidth = width;
+function createWorld(width, height, type) {
+	return {
+		type,
+		map: [],
+		width: width,
+		height: height,
+		mobs: [],
+		shops: [],
+		ships: [],
+		dungeon: [],
+		door: [],
+	};
+}
 
-	location = 'world';
+function generateWorldOjects(world) {
+	world.ships = [];
+	world.shops = [];
+	world.dungeon = [];
+	world.door = [];
+
+	if (world.type === 'world') {
+		world.shops.push({
+			x: randomInt(2, world.width - 3),
+			y: randomInt(2, world.height - 3),
+			char: '$',
+			name: 'Shop!!!',
+			items: [],
+		});
+
+		world.ships.push({
+			x: randomInt(2, world.width - 3),
+			y: randomInt(2, world.height - 3),
+			char: 'S',
+			name: 'Ship...',
+			price: 30,
+		});
+
+		world.dungeon.push({
+			x: randomInt(2, world.width - 3),
+			y: randomInt(2, world.height - 3),
+			char: '>',
+			name: 'dungeon',
+		});
+	}
+
+	if (world.type === 'dungeon') {
+		world.door.push({
+			x: randomInt(2, world.width - 3),
+			y: randomInt(2, world.height - 3),
+			char: '<',
+			target: 'outside',
+		});
+	}
+}
+
+function createMap(world) {
+	activeWorld = world;
 
 	player.x = 15;
 	player.y = 2;
 
-	createBaseMap(currentWidth, currentHeight);
-	createNewShop();
+	createBaseMap(activeWorld.width, activeWorld.height);
+	generateWorldOjects(activeWorld);
 	drawMap();
 }
 
 function createDungeon() {
-	currentHeight = 10;
-	currentWidth = 10;
+	worlds.dungeon = createWorld(10, 10, 'dungeon');
 
-	location = 'dungeon';
+	activeWorld = worlds.dungeon;
+	createMap(activeWorld);
 
 	player.x = 2;
 	player.y = 2;
 
-	mobs = [];
-
-	createBaseMap(currentWidth, currentHeight);
-
-	map[3][3] = '~';
-	map[3][4] = '~';
-	map[4][3] = '~';
+	activeWorld.map[3][3] = '~';
+	activeWorld.map[3][4] = '~';
+	activeWorld.map[4][3] = '~';
 
 	createMobsDungeon(4);
 
@@ -147,7 +154,7 @@ function createDungeon() {
 function createDungeonMob() {
 	const pos = getRandomFreeCells();
 
-	mobs.push({
+	activeWorld.mobs.push({
 		x: pos.x,
 		y: pos.y,
 		char: 'R',
@@ -161,7 +168,7 @@ function createDungeonMob() {
 function createDungeonBoss() {
 	const pos = getRandomFreeCells();
 
-	mobs.push({
+	activeWorld.mobs.push({
 		x: pos.x,
 		y: pos.y,
 		char: `${blue + 'B' + reset}`,
@@ -173,7 +180,7 @@ function createDungeonBoss() {
 }
 
 function createMobsDungeon(count) {
-	mobs = [];
+	activeWorld.mobs = [];
 	for (let i = 0; i < count; i++) {
 		createDungeonMob();
 	}
@@ -184,15 +191,15 @@ function drawMap() {
 	console.clear();
 	let output = '';
 
-	for (let y = 0; y < currentHeight; y++) {
+	for (let y = 0; y < activeWorld.height; y++) {
 		let row = '';
 
-		for (let x = 0; x < currentWidth; x++) {
+		for (let x = 0; x < activeWorld.width; x++) {
 			const mob = getMob(x, y);
 			const shop = getShop(x, y);
 			const ship = getShip(x, y);
 			const dungeon = getDungeon(x, y);
-			const door = location === 'dungeon' ? getDoor(x, y) : null;
+			const door = activeWorld.type === 'dungeon' ? getDoor(x, y) : null;
 
 			if (player.x === x && player.y === y) {
 				row += player.char;
@@ -207,7 +214,7 @@ function drawMap() {
 			} else if (door) {
 				row += door.char;
 			} else {
-				row += map[y][x];
+				row += activeWorld.map[y][x];
 			}
 		}
 		output += row + '\n';
@@ -223,7 +230,7 @@ function drawMap() {
 }
 
 function getMob(x, y) {
-	return mobs.find(mob => {
+	return activeWorld.mobs.find(mob => {
 		return mob.x === x && mob.y === y;
 	});
 }
@@ -233,7 +240,7 @@ function randomInt(min, max) {
 }
 
 function getFreeCell(x, y) {
-	if (map[y][x] === '#') {
+	if (activeWorld.map[y][x] === '#') {
 		return false;
 	}
 
@@ -262,8 +269,8 @@ function getFreeCell(x, y) {
 
 function getRandomFreeCells() {
 	while (true) {
-		const x = randomInt(1, currentWidth - 2);
-		const y = randomInt(1, currentHeight - 2);
+		const x = randomInt(1, activeWorld.width - 2);
+		const y = randomInt(1, activeWorld.height - 2);
 
 		if (getFreeCell(x, y)) {
 			return { x, y };
@@ -272,7 +279,7 @@ function getRandomFreeCells() {
 }
 
 function getShop(x, y) {
-	return shops.find(shop => {
+	return activeWorld.shops.find(shop => {
 		return shop.x === x && shop.y === y;
 	});
 }
@@ -281,7 +288,7 @@ function createMobs(count) {
 	for (let i = 0; i < count; i++) {
 		let pos = getRandomFreeCells();
 
-		mobs.push({
+		activeWorld.mobs.push({
 			x: pos.x,
 			y: pos.y,
 			char: 'M',
@@ -296,7 +303,7 @@ function movePlayer(dx, dy) {
 	const nextY = player.y + dy;
 	const nextX = player.x + dx;
 
-	if (map[nextY][nextX] === '#') {
+	if (activeWorld.map[nextY][nextX] === '#') {
 		message = 'You hit wall haha';
 		drawMap();
 		return;
@@ -339,7 +346,7 @@ function movePlayer(dx, dy) {
 	const dungeon = getDungeon(nextX, nextY);
 
 	if (dungeon) {
-		mode = 'game';
+		createDungeon();
 		return;
 	}
 
@@ -355,7 +362,7 @@ function movePlayer(dx, dy) {
 
 	message = '';
 	moveMobs();
-	if (location === 'world') {
+	if (activeWorld.type === 'world') {
 		generationNewMobs();
 	}
 
@@ -440,6 +447,10 @@ function handleInventory(key) {
 	const index = Number(key.name) - 1;
 
 	const item = player.inventory[index];
+
+	if (!item) {
+		return;
+	}
 
 	if (item.type === 'potion') {
 		player.hp = Math.min(item.value + player.hp, player.maxHp);
@@ -544,24 +555,11 @@ function handleShipInput(key) {
 	}
 }
 
-// убрать нахуй эту залупу и сделать все в одном массиве!!!!!
-function createNewShop() {
-	shops.length = 0;
-
-	shops.push({
-		x: randomInt(2, currentWidth - 3),
-		y: randomInt(2, currentHeight - 3),
-		char: '$',
-		name: `Shop ${worldLevel}`,
-		items: [],
-	});
-}
-
 function drawShop(shop) {
 	console.clear();
 	let output = ``;
 
-	item = shop.items;
+	let item = shop.items;
 
 	output += '====================\n';
 	output += `${shop.name}\n`;
@@ -589,8 +587,8 @@ function fightMod(mob) {
 	if (mob.hp <= 0) {
 		player.gold += mob.gold;
 
-		let index = mobs.indexOf(mob);
-		mobs.splice(index, 1);
+		let index = activeWorld.mobs.indexOf(mob);
+		activeWorld.mobs.splice(index, 1);
 
 		message = `You killed mob! Gold: +${yellow + mob.gold + reset}`;
 
@@ -606,7 +604,7 @@ function fightMod(mob) {
 }
 
 function getShip(x, y) {
-	return ships.find(ship => {
+	return activeWorld.ships.find(ship => {
 		return ship.x === x && ship.y === y;
 	});
 }
@@ -617,13 +615,13 @@ function drawShip(ship) {
 	let output = '';
 
 	output += '====================\n';
-	output += `      ${ship.name}\n`;
+	output += `      ${activeWorld.ships.name}\n`;
 	output += '====================\n\n';
 
 	output += `Current world: ${worldLevel}\n`;
 	output += `Your gold: ${player.gold}\n\n`;
 
-	output += `1 — Travel to next world — ${ship.price} gold\n`;
+	output += `1 — Travel to next world — ${currentShip.price} gold\n`;
 	output += '2 — Leave ship\n\n';
 
 	output += `Message: ${message}\n`;
@@ -648,23 +646,22 @@ function travelToNewWorld() {
 }
 
 function createNewWorld() {
-	mobs = [];
+	activeWorld.mobs = [];
 
 	player.x = 15;
 	player.y = 2;
 
-	createMap();
+	createMap(worlds.overworld);
 	createMobs(8);
 	mode = 'game';
-	currentShip = null;
 }
 
 function generationNewMobs() {
-	if (mobs.length >= minMobs) {
+	if (activeWorld.mobs.length >= minMobs) {
 		return;
 	}
 
-	const mobsQuan = maxMobs - mobs.length;
+	const mobsQuan = maxMobs - activeWorld.mobs.length;
 	createMobs(mobsQuan);
 
 	message = 'Spawn more mobs...';
@@ -679,7 +676,7 @@ function moveMobs() {
 		{ dx: 0, dy: 0 },
 	];
 
-	for (const mob of mobs) {
+	for (const mob of activeWorld.mobs) {
 		const dxToPlayer = player.x - mob.x;
 		const dyToPlayer = player.y - mob.y;
 
@@ -709,20 +706,20 @@ function moveMobs() {
 }
 
 function getDungeon(x, y) {
-	return dungeon.find(dung => {
+	return activeWorld.dungeon.find(dung => {
 		return dung.x === x && dung.y === y;
 	});
 }
 
 function getDoor(x, y) {
-	return door.find(dung => {
+	return activeWorld.door.find(dung => {
 		return dung.x === x && dung.y === y;
 	});
 }
 
 function getOutside() {
-	mobs = [];
-	createMap();
+	activeWorld.mobs = [];
+	createMap(worlds.overworld);
 	createMobs(8);
 	drawMap();
 }
@@ -741,6 +738,6 @@ process.stdin.on('keypress', function (str, key) {
 	handleInput(key);
 });
 
-createMap();
+createMap(worlds.overworld);
 createMobs(5);
 drawMap();
