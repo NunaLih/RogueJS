@@ -49,8 +49,8 @@ let mobs = [];
 
 const shops = [
 	{
-		x: 10,
-		y: 10,
+		x: randomInt(2, currentWidth - 3),
+		y: randomInt(2, currentHeight - 3),
 		char: '$',
 		name: 'Shop!!!',
 		items: [],
@@ -117,6 +117,7 @@ function createMap() {
 	player.y = 2;
 
 	createBaseMap(currentWidth, currentHeight);
+	createNewShop();
 	drawMap();
 }
 
@@ -211,10 +212,11 @@ function drawMap() {
 		}
 		output += row + '\n';
 	}
-	output += '\nWASD / arrows — move, Q — quit\n';
-	output += `Hp: ${red + player.hp + reset}, hits: ${getPlayerDamage()}, gold: ${yellow + player.gold + reset}\n`;
+	output += '\nWASD/arrows — move, I - inventory, Q — quit\n\n';
+	output += `Hp: ${red + player.hp + reset}/${red + player.maxHp + reset}, hits: ${getPlayerDamage()}, gold: ${yellow + player.gold + reset}\n`;
 	output += `Weapon: ${player.equipment.weapon ? green + player.equipment.weapon.name + reset : 'none'}  `;
 	output += `Armor: ${player.equipment.armor ? green + player.equipment.armor.name + reset : 'none'}\n`;
+	output += `Inventory: ${player.inventory.length} item\n`;
 	output += `Message: ${message}\n`;
 
 	console.log(output);
@@ -542,6 +544,19 @@ function handleShipInput(key) {
 	}
 }
 
+// убрать нахуй эту залупу и сделать все в одном массиве!!!!!
+function createNewShop() {
+	shops.length = 0;
+
+	shops.push({
+		x: randomInt(2, currentWidth - 3),
+		y: randomInt(2, currentHeight - 3),
+		char: '$',
+		name: `Shop ${worldLevel}`,
+		items: [],
+	});
+}
+
 function drawShop(shop) {
 	console.clear();
 	let output = ``;
@@ -627,7 +642,6 @@ function travelToNewWorld() {
 
 	worldLevel += 1;
 	createNewWorld();
-
 	message = `You travel new world.`;
 
 	drawMap();
@@ -641,7 +655,6 @@ function createNewWorld() {
 
 	createMap();
 	createMobs(8);
-
 	mode = 'game';
 	currentShip = null;
 }
