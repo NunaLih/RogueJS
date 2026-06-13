@@ -26,7 +26,7 @@ let player = {
 	hp: 15,
 	maxHp: 50,
 	hits: 4,
-	gold: 75,
+	gold: 1000,
 
 	inventory: [],
 
@@ -50,6 +50,7 @@ const shopItems = [
 	{ name: 'Base weapon', type: 'weapon', damage: 1, price: 20 },
 	{ name: 'Dragonsword', type: 'weapon', damage: 10, price: 150 },
 	{ name: 'Claw', type: 'weapon', damage: 4, price: 70 },
+	{ name: 'Base armor', type: 'armor', defence: 15, price: 90 },
 ];
 
 function createBaseMap(w, h) {
@@ -220,7 +221,7 @@ function drawMap() {
 		output += row + '\n';
 	}
 	output += '\nWASD/arrows — move, I - inventory, Q — quit\n\n';
-	output += `Hp: ${red + player.hp + reset}/${red + player.maxHp + reset}, hits: ${getPlayerDamage()}, gold: ${yellow + player.gold + reset}\n`;
+	output += `Hp: ${red + player.hp + reset}/${red + getArmorPlayer() + reset}, hits: ${getPlayerDamage()}, gold: ${yellow + player.gold + reset}\n`;
 	output += `Weapon: ${player.equipment.weapon ? green + player.equipment.weapon.name + reset : 'none'}  `;
 	output += `Armor: ${player.equipment.armor ? green + player.equipment.armor.name + reset : 'none'}\n`;
 	output += `Inventory: ${player.inventory.length} item\n`;
@@ -453,7 +454,7 @@ function handleInventory(key) {
 	}
 
 	if (item.type === 'potion') {
-		player.hp = Math.min(item.value + player.hp, player.maxHp);
+		player.hp = Math.min(item.value + player.hp, getArmorPlayer());
 
 		player.inventory.splice(index, 1);
 
@@ -478,6 +479,25 @@ function handleInventory(key) {
 		drawMap();
 		return;
 	}
+
+	if (item.type === 'armor') {
+		if (player.equipment.armor) {
+			player.inventory.push(player.equipment.armor);
+
+			player.maxHp -= player.equipment.armor.defence;
+		}
+
+		player.equipment.armor = item;
+
+		player.maxHp += item.defence;
+
+		player.inventory.splice(index, 1);
+
+		message = `Equipped ${item.name} +${item.defence} maxHp`;
+		mode = 'game';
+		drawMap();
+		return;
+	}
 }
 
 function getPlayerDamage() {
@@ -490,7 +510,15 @@ function getPlayerDamage() {
 	return damage;
 }
 
-function getArmorPlayer() {}
+function getArmorPlayer() {
+	let playerMaxHp = player.maxHp;
+
+	if (player.equipment.armor) {
+		playerMaxHp += player.equipment.armor.defence;
+	}
+
+	return playerMaxHp;
+}
 
 function generateShopItems(item) {
 	const shuffl = shopItems.sort(() => {
@@ -524,6 +552,17 @@ function buyItem(item) {
 		});
 		console.log((message = `Added inventory ${item.name} +${item.value}hp`));
 	}
+
+	if (item.type === 'armor') {
+		player.inventory.push({
+			name: item.name,
+			type: item.type,
+			defence: item.defence,
+		});
+		console.log(
+			(message = `Added inventory ${item.name} +${item.defence}/maxHp`),
+		);
+	}
 }
 
 function handleShopInput(key) {
@@ -534,6 +573,10 @@ function handleShopInput(key) {
 	}
 
 	const index = Number(key.name) - 1;
+
+	if (isNaN(index)) {
+		return;
+	}
 
 	const item = currentShop.items[index];
 
@@ -573,6 +616,9 @@ function drawShop(shop) {
 		}
 		if (elem.type === 'potion') {
 			return (output += `${index + 1}. ${elem.name} +(${elem.value})hp — ${elem.price} gold\n`);
+		}
+		if (elem.type === 'armor') {
+			return (output += `${index + 1}. ${elem.name} +(${elem.defence})maxHp — ${elem.price} gold\n`);
 		}
 	});
 	output += `\nMessage: ${message}\n`;
