@@ -33,6 +33,7 @@ let player = {
 	y: 2,
 	char: '@',
 	hp: 15,
+	maxHp: 50,
 	hits: 4,
 	gold: 75,
 
@@ -87,7 +88,7 @@ const door = [
 const shopItems = [
 	{ name: 'Base heal', type: 'potion', value: 5, price: 10 },
 	{ name: 'Medium heal', type: 'potion', value: 15, price: 35 },
-	{ name: 'Super heal', type: 'potion', value: 40, price: 90 },
+	{ name: 'Super heal', type: 'potion', value: 60, price: 90 },
 	{ name: 'Base weapon', type: 'weapon', damage: 1, price: 20 },
 	{ name: 'Dragonsword', type: 'weapon', damage: 10, price: 150 },
 	{ name: 'Claw', type: 'weapon', damage: 4, price: 70 },
@@ -439,7 +440,7 @@ function handleInventory(key) {
 	const item = player.inventory[index];
 
 	if (item.type === 'potion') {
-		player.hp += item.value;
+		player.hp = Math.min(item.value + player.hp, player.maxHp);
 
 		player.inventory.splice(index, 1);
 
